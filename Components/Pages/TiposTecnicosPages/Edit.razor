@@ -1,0 +1,96 @@
+﻿@page "/TipoTecnico/Edit"
+@page "/TipoTecnico/Edit/{TipoId:int}"
+@inject TiposTecnicosServices tiposTecnicosService
+@rendermode InteractiveServer
+
+<EditForm Model="TiposTecnicos" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <div class="card shadow-lg border-0 rounded" style="background-color: #f8f9fa;">
+        <div class="card-header bg-primary text-white" style="text-align: center;">
+            <h3> <i class="fas fa-clipboard-list"></i> Editar Tipo T&eacute;cnico</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="IdTipo" class="form-label">TipoId:</label>
+                    <div class="input-group">
+                        <div style="width: 40%; height: 1em;">
+                            <InputNumber @bind-Value="TiposTecnicos.TipoTecnicoId" class="form-control" style="font-size: 0.8em;" aria-describedby="BotonBuscar" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="Descripcion" class="form-label">Descripci&oacute;n:</label>
+                <InputText @bind-Value="TiposTecnicos.Descripcion" class="form-control" />
+                <ValidationMessage For="@(() => TiposTecnicos.Descripcion)" />
+            </div>
+        </div>
+        <div class="card-footer bg-light d-flex justify-content-center mt-3">
+            <div class="btn-group">
+                @*Boton Nuevo*@
+                <button type="button" class="btn btn-outline-primary ml-2" @onclick="Nuevo"><span class="bi bi-plus"></span> Nuevo </button>
+                @*Boton Guardar*@
+                <button type="submit" class="btn btn-outline-success ml-2"><span class="bi bi-check-circle-fill"></span> Guardar </button>
+                @*Boton Retroceder*@
+                <a type="button" href="/TipoTecnico/Index/" class="btn btn-outline-danger"><span class="bi bi-arrow-bar-left"></span> Retroceder </a>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int TipoId { get; set; }
+    TiposTecnicos TiposTecnicos { get; set; } = new TiposTecnicos();
+    public bool Existe { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (TipoId != 0)
+        {
+            await Buscar();
+        }
+    }
+    public async Task Buscar()
+    {
+        Existe = false;
+        var encontro = await tiposTecnicosService.Buscar(TipoId);
+
+        if (encontro != null)
+        {
+            TiposTecnicos = encontro;
+        }
+        else
+        {
+            Nuevo();
+        }
+    }
+
+    public async Task Guardar()
+    {
+        if (Validar())
+        {
+            return;
+        }
+
+        var guardo = await tiposTecnicosService.Guardar(TiposTecnicos);
+        if (guardo)
+        {
+            Nuevo();
+        }
+    }
+
+    public void Nuevo()
+    {
+        TiposTecnicos = new TiposTecnicos();
+        Existe = false;
+    }
+
+    public bool Validar()
+    {
+        Existe = tiposTecnicosService.Listar(t => t.Descripcion!.ToLower() == TiposTecnicos.Descripcion!.ToLower() && t.TipoTecnicoId != TiposTecnicos.TipoTecnicoId).Any();
+        return Existe;
+    }
+}

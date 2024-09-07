@@ -1,0 +1,130 @@
+﻿@page "/TipoTecnico/Create"
+@page "/TipoTecnico/Create/{TipoId:int}"
+@inject TiposTecnicosServices tipoTecnicosService
+@rendermode InteractiveServer
+
+<EditForm Model="TiposTecnicos" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    @*Alerta Guardado*@
+    <Alert Color="@alertColorGuardo" Dismissable="false" Hidden="@(!mostrarNotificacion)">
+        <Icon Name="@alertIconNameGuardo" class="me-2"></Icon>@alertaGuardo
+    </Alert>
+    @*Alerta Error al guardar*@
+    <Alert Color="@alertColorError" Dismissable="false" Hidden="@(!mostrarNotificacion)">
+        <Icon Name="@alertIconNameError" class="me-2"></Icon>@alertaError
+    </Alert>
+    <div class="card shadow-lg border-0 rounded" style="background-color: #f8f9fa;">
+        <div class="card-header bg-primary text-white" style="text-align: center;">
+            <h3> <i class="fas fa-clipboard-list"></i> Registro TipoT&eacute;cnicos</h3>
+        </div>
+        <div class="card-body">
+            @* TipoId *@
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="IdTipo" class="form-label">IdTipo:</label>
+                    <div class="input-group">
+                        <div style="width: 40%; height: 1em;">
+                            <InputNumber @bind-Value="TiposTecnicos.TipoTecnicoId" class="form-control" style="font-size: 0.8em;" aria-describedby="BotonBuscar" />
+                            <ValidationMessage For="@(() => TiposTecnicos.TipoTecnicoId)" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @* Descripcion *@
+            <div class="mb-3">
+                <label for="Descripcion" class="form-label">Descripci&oacute;n:</label>
+                <InputText @bind-Value="TiposTecnicos.Descripcion" class="form-control" />
+                <ValidationMessage For="@(() => TiposTecnicos.Descripcion)" />
+            </div>
+        </div>
+    </div>
+    <div class="card-footer bg-light d-flex justify-content-center mt-3">
+        <div class="btn-group">
+            @*Boton Nuevo*@
+            <button type="button" class="btn btn-outline-primary ml-2" @onclick="Nuevo"><span class="bi bi-plus"></span> Nuevo </button>
+            @*Boton Guardar*@
+            <button type="submit" class="btn btn-outline-success ml-2"><span class="bi bi-check-circle-fill"></span> Guardar </button>
+            @*Boton Retroceder*@
+            <a type="button" href="/TipoTecnico/Index/" class="btn btn-outline-danger"><span class="bi bi-arrow-bar-left"></span> Retroceder </a>
+        </div>
+    </div>
+</EditForm>
+
+
+@code {
+    [Parameter]
+    public int TipoId { get; set; }
+    public int? tipotecnicoId { get; set; }
+    AlertColor alertColorGuardo, alertColorError;
+    IconName alertIconNameError, alertIconNameGuardo;
+    public bool mostrarNotificacion = false;
+    string alertaGuardo, alertaError = "";
+    public TiposTecnicos TiposTecnicos { get; set; } = new TiposTecnicos();
+
+
+    protected override void OnInitialized()
+    {
+        if (tipotecnicoId.HasValue)
+        {
+            TiposTecnicos.TipoTecnicoId = tipotecnicoId.Value;
+        }
+    }
+    public void Nuevo()
+    {
+        this.TiposTecnicos = new TiposTecnicos();
+    }
+
+
+    public async Task Guardar()
+    {
+        if (await Validar())
+        {
+            AlertaError();
+            MostrarNotificacion();
+            return;
+        }
+        else
+        {
+            var guardar = await tipoTecnicosService.Guardar(TiposTecnicos);
+            if (guardar)
+            {
+                AlertaGuardado();
+                MostrarNotificacion();
+                Nuevo();
+            }
+            else
+            {
+                AlertaError();
+                MostrarNotificacion();
+            }
+
+        }
+    }
+    public async Task<bool> Validar()
+    {
+        bool existeDescripcion = await tipoTecnicosService.ExisteDescripcion(TiposTecnicos.Descripcion, TiposTecnicos.TipoTecnicoId);
+        return existeDescripcion;
+    }
+    public async Task MostrarNotificacion()
+    {
+        mostrarNotificacion = true;
+        StateHasChanged();
+        await Task.Delay(5000);
+        mostrarNotificacion = false;
+        StateHasChanged();
+    }
+    public void AlertaGuardado()
+    {
+        alertColorGuardo = AlertColor.Success;
+        alertIconNameGuardo = IconName.CheckCircleFill;
+        alertaGuardo = "El tipo de técnico se registro de manera correcta.";
+
+    }
+    public void AlertaError()
+    {
+        alertColorError = AlertColor.Danger;
+        alertIconNameError = IconName.ExclamationTriangleFill;
+        alertaError = "Ya existe un tipo de técnico registrado con esa descripción.";
+
+    }
+}
