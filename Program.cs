@@ -1,10 +1,26 @@
+using Microsoft.EntityFrameworkCore;
 using RegistrosTecnicos1.Components;
+using RegistrosTecnicos1.DAL;
+using RegistrosTecnicos1.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddSingleton<Radzen.NotificationService>();
+builder.Services.AddBlazorBootstrap();
+
+//Obtener el constructor
+var ConStr = builder.Configuration.GetConnectionString("ConStr");
+
+//Agregamos el contexto
+builder.Services.AddDbContext<Contexto>(Options => Options.UseSqlite(ConStr));
+
+//Inyectar el service
+builder.Services.AddScoped<TecnicosServices>();
+builder.Services.AddScoped<TiposTecnicosServices>();
 
 var app = builder.Build();
 
