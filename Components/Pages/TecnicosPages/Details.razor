@@ -1,0 +1,55 @@
+﻿@page "/Tecnico/Details"
+@page "/Tecnico/Details/{IdTecnico:int}"
+@inject TecnicosServices tecnicosServices
+@inject NavigationManager navigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Detalles del t&eacute;cnico</PageTitle>
+@if (Tecnicos != null)
+{
+    <div class="container">
+        <div class="card shadow-header">
+            <div class="card-header  bg-primary text-white text-center py-2 rounded">
+                <h3 class="text-center"><strong>Detalles del t&eacute;cnico</strong></h3>
+            </div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6">
+
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li><strong>TecnicoId:</strong> @Tecnicos.IdTecnico</li>
+                                <li><strong>Nombre:</strong> @Tecnicos.Nombre</li>
+                                <li><strong>Sueldo por Hora:</strong> @Tecnicos.SueldoHora</li>
+                                <li><strong>Tipo de Tecnico:</strong> @Tecnicos.TipoTecnico?.Descripcion</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="button" class="btn btn-outline-primary" @onclick="Volver"><i class="bi bi-box-arrow-left"></i> Volver</button>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <p>T&eacute;cnico no encontrado.</p>
+}
+
+
+@code {
+    [Parameter]
+    public int IdTecnico { get; set; }
+    public Tecnicos? Tecnicos { get; set; } = new Tecnicos();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Tecnicos = await tecnicosServices.Buscar(IdTecnico);
+    }
+    public void Volver()
+    {
+        navigationManager.NavigateTo("/Tecnico/Index");
+    }
+}

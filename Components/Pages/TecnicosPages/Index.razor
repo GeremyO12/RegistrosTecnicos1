@@ -1,0 +1,133 @@
+﻿@page "/"
+@page "/Tecnico/Index"
+@inject TecnicosServices tecnicosService
+@rendermode InteractiveServer
+
+<EditForm Model="ListaTecnicos" class="border shadow-lg p-3 rounded">
+    <div class="card-header bg-primary text-white text-center py-2 rounded">
+        <h3 style="font-weight: bold;" class="mb-0 font-weight-bold">Consulta T&eacute;cnicos</h3>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3 align-items-end">
+
+            @*Filtro*@
+            <div class="col-md-3">
+                <label for="Filtro" class="form-label">Filtrar por:</label>
+                <select @bind="filtro" class="form-select">
+                    <option value="id">ID</option>
+                    <option value="nombre">Nombre</option>
+                    <option value="sueldo">Sueldo</option>
+                    <option value="tipo">Tipo</option>
+                </select>
+            </div>
+
+            @*Barra Busqueda*@
+            <div class="col-md-6">
+                <label for="ValorFiltro" class="form-label">Búsqueda:</label>
+                <div class="input-group">
+                    <input @bind="valorFiltro" class="form-control" placeholder="Buscar" />
+                    <button @onclick="Buscar" class="btn btn-outline-primary" type="button">
+                        <span class="bi bi-search"></span> Buscar
+                    </button>
+                </div>
+            </div>
+
+            @*Boton Crear*@
+            <div class="col-md-3 text-end">
+                <a href="/Tecnico/Create" class="btn btn-success" type="button"><span class="bi bi-floppy"></span> Crear </a>
+            </div>
+        </div>
+    </div>
+
+    @*Tabla*@
+    <table class="table table-bordered text-center">
+        <thead class="bg-primary text-white">
+            <tr>
+                <th>Id</th>
+                <th>Nombre</th>
+                <th>Sueldo por Hora</th>
+                <th>Tipo</th>
+                <th>Ver</th>
+                <th>Editar</th>
+                <th>Eliminar</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var tecnico in ListaTecnicos)
+            {
+                <tr>
+                    <td>@tecnico.IdTecnico</td>
+                    <td>@tecnico.Nombre</td>
+                    <td>@tecnico.SueldoHora</td>
+                    <td>@tecnico.TipoTecnico?.Descripcion</td>
+                    <td>
+
+                        @*Boton Details*@
+                        <a href="/Tecnico/Details/@tecnico.IdTecnico" style="border: none; background-color: transparent;" class="btn-detalle">
+                            <span class="bi bi-info-circle-fill" style="font-size: 2rem;"></span>
+                        </a>
+
+                    </td>
+                    <td>
+                        @*Boton Editar*@
+                        <a href="/Tecnico/Edit/@tecnico.IdTecnico" style="border: none; background-color: transparent;" class="btn-editar">
+                            <span class="bi bi-marker-tip" style="font-size: 2rem;"></span>
+                        </a>
+                    </td>
+
+                    <td>
+                        @*Boton Eliminar*@
+                        <a href="/Tecnico/Delete/@tecnico.IdTecnico" style="border: none; background-color: transparent;" class="btn-eliminar">
+                            <span class="bi bi-dash-circle-fill" style="font-size: 2rem;"></span>
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</EditForm>
+
+@code {
+    public List<Tecnicos> ListaTecnicos = new List<Tecnicos>();
+    private string valorFiltro = "";
+    private string filtro = "Id";
+
+    protected override void OnInitialized()
+    {
+        ListaTecnicos = tecnicosService.Listar(c => true);
+    }
+    public void Buscar()
+    {
+
+        if (!string.IsNullOrWhiteSpace(valorFiltro))
+        {
+            if (filtro == "id" && int.TryParse(valorFiltro, out int IdTecnico))
+            {
+                ListaTecnicos = tecnicosService.Listar(t => t.IdTecnico == IdTecnico);
+            }
+            else if (filtro == "nombre")
+            {
+                string filtroMinuscula = valorFiltro.ToLower();
+                ListaTecnicos = tecnicosService.Listar(t => t.Nombre.ToLower().Contains(filtroMinuscula));
+            }
+            else if (filtro == "sueldo" && double.TryParse(valorFiltro, out double SueldoHora))
+            {
+                ListaTecnicos = tecnicosService.Listar(t => t.SueldoHora == SueldoHora);
+            }
+            else if (filtro == "tipo" && int.TryParse(valorFiltro, out int TipoTecnicoId))
+            {
+                string filtroMinuscula = valorFiltro.ToLower();
+                ListaTecnicos = tecnicosService.Listar(t => t.TipoTecnico.Descripcion.ToLower().Contains(filtroMinuscula));
+            }
+            else
+            {
+                ListaTecnicos = new List<Tecnicos>();
+            }
+        }
+        else
+        {
+            ListaTecnicos = tecnicosService.Listar(t => true);
+        }
+    }
+}

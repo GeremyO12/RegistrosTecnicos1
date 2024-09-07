@@ -1,0 +1,155 @@
+﻿@page "/Tecnico/Create"
+@page "/Tecnico/Create/{TecnicoId:int}"
+@inject TecnicosServices tecnicosService
+@inject TiposTecnicosServices tiposTecnicosService
+@rendermode InteractiveServer
+
+<EditForm Model="Tecnicos" OnValidSubmit="Guardar">
+     <DataAnnotationsValidator />
+    @*Alerta Guardado*@
+    <Alert Color="@alertColorGuardo" Dismissable="false" Hidden="@(!mostrarNotificacion)">
+        <Icon Name="@alertIconNameGuardo" class="me-2"></Icon>@alertaGuardo
+    </Alert>
+    @*Alerta Error al guardar*@
+    <Alert Color="@alertColorError" Dismissable="false" Hidden="@(!mostrarNotificacion)">
+        <Icon Name="@alertIconNameError" class="me-2"></Icon>@alertaError
+    </Alert>
+    <div class="card shadow-lg border-0 rounded" style="background-color: #f8f9fa;">
+        <div class="card-header bg-primary text-white" style="text-align: center;">
+            <h3> <i class="fas fa-clipboard-list"></i> Registro de T&eacute;cnicos</h3>
+        </div>
+        <div class="card-body">
+                @*TecnicoId*@
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="TecnicoId" class="form-label">TecnicoId:</label>
+                        <div class="input-group">
+                            <div style="width: 40%; height: 1em;">
+                                <InputNumber @bind-Value="Tecnicos.IdTecnico" class="form-control" style="font-size: 0.8em;" aria-describedby="BotonBuscar" />
+                                <ValidationMessage For="@(() => Tecnicos.IdTecnico)" />
+                            </div>
+                        </div>
+                    </div>
+                    @*Seleccionar tipo de tecnico*@
+                    <div class="col-md-3 mb-3">
+                        <label for="TipoTecnico" class="form-label">Seleccione el tipo de técnico:</label>
+                        <select @bind="TipoSeleccionado" class="form-select">
+                        @foreach (var tipoTecnico in ListaTiposTecnicos)
+                        {
+                             <option value="@tipoTecnico.TipoTecnicoId">@tipoTecnico.Descripcion</option>
+                        }
+                        
+                        </select>
+                    </div>
+               </div
+
+            @* Nombre *@
+           <div class="mb-3">
+                    <label for="Nombre" class="form-label">Nombre:</label>
+                    <InputText @bind-Value="Tecnicos.Nombre" class="form-control" />
+                <ValidationMessage For="@(() => Tecnicos.Nombre)" />
+          </div>
+            @* Sueldo Por Hora *@
+            <div class="mb-3">
+                <label for="SueldoHora" class="form-label">Sueldo por Hora:</label>
+                <InputNumber @bind-Value="Tecnicos.SueldoHora" class="form-control" />
+                <ValidationMessage For="@(() => Tecnicos.SueldoHora)" />
+            </div>
+        </div>
+     </div>
+         <div class="card-footer bg-light d-flex justify-content-center mt-3">
+             <div class="btn-group">
+                @*Boton Nuevo*@
+                <button type="button" class="btn btn-outline-primary ml-2" @onclick="Nuevo"><span class="bi bi-plus"></span> Nuevo </button>
+                @*Boton Guardar*@
+                <button type="submit" class="btn btn-outline-success ml-2"><span class="bi bi-check-circle-fill"></span> Guardar </button>
+                @*Boton Retroceder*@
+                <a type="button" href="/Tecnico/Index/" class="btn btn-outline-danger"><span class="bi bi-arrow-bar-left"></span> Retroceder </a>
+            </div>
+         </div>
+    </EditForm>
+
+@code {
+    [Parameter]
+    public int TecnicoId{ get; set; }
+    public Tecnicos Tecnicos{ get; set; } = new Tecnicos();
+    public int? tecnicoId { get; set; }
+    public bool Existe { get; set; } = false;
+    public bool mostrarNotificacion = false;
+    public List<TiposTecnicos> ListaTiposTecnicos = new List<TiposTecnicos>();
+    AlertColor alertColorGuardo,alertColorError;
+    IconName alertIconNameError, alertIconNameGuardo;
+    string alertaGuardo , alertaError = "";
+    private string filtro = "Id";
+    public int TipoSeleccionado { get; set; }
+
+
+
+    protected override void OnInitialized()
+    {
+        ListaTiposTecnicos = tiposTecnicosService.Listar(c => true);
+
+        if (tecnicoId.HasValue)
+        {
+            Tecnicos.IdTecnico = tecnicoId.Value;
+        }
+    }
+    public async Task MostrarNotificacion()
+    {
+        mostrarNotificacion = true;
+        StateHasChanged();
+        await Task.Delay(5000);
+        mostrarNotificacion = false;
+        StateHasChanged();
+    }
+    public void AlertaGuardado()
+    {
+        alertColorGuardo = AlertColor.Success;
+        alertIconNameGuardo = IconName.CheckCircleFill;
+        alertaGuardo = "El técnico se registro de manera correcta.";
+
+    }
+    public void AlertaError()
+    {
+        alertColorError = AlertColor.Danger;
+        alertIconNameError = IconName.ExclamationTriangleFill;
+        alertaError = "Ya existe un técnico registrado con ese nombre.";
+
+    }
+
+    public async Task Guardar()
+    {
+        Tecnicos.TipoTecnicoId = TipoSeleccionado;
+        if (await Validar())
+        {
+            AlertaError();
+            MostrarNotificacion();
+            return;
+        }
+        else
+        {
+            var guardar = await tecnicosService.Guardar(Tecnicos);
+            if (guardar)
+            {
+                AlertaGuardado();
+                MostrarNotificacion();
+                Nuevo();
+            }
+            else
+            {
+                AlertaError();
+                MostrarNotificacion();
+            }
+
+        }
+    }
+    public void Nuevo()
+    {
+        this.Tecnicos = new Tecnicos();  
+    }
+    public async Task<bool> Validar()
+    {
+        bool existeNombre = await tecnicosService.ExisteNombre(Tecnicos.Nombre, Tecnicos.IdTecnico);
+        return existeNombre;
+    }
+}
