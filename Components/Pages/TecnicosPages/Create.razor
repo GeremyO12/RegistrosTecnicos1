@@ -4,7 +4,7 @@
 @inject TiposTecnicosServices tiposTecnicosService
 @rendermode InteractiveServer
 
-<EditForm Model="Tecnicos" OnValidSubmit="Guardar">
+<EditForm Model="Tecnicos" OnValidSubmit="Guardar" FormName="tecnicoCreate">
      <DataAnnotationsValidator />
     @*Alerta Guardado*@
     <Alert Color="@alertColorGuardo" Dismissable="false" Hidden="@(!mostrarNotificacion)">
@@ -33,15 +33,16 @@
                     @*Seleccionar tipo de tecnico*@
                     <div class="col-md-3 mb-3">
                         <label for="TipoTecnico" class="form-label">Seleccione el tipo de técnico:</label>
-                        <select @bind="TipoSeleccionado" class="form-select">
-                        @foreach (var tipoTecnico in ListaTiposTecnicos)
-                        {
-                             <option value="@tipoTecnico.TipoTecnicoId">@tipoTecnico.Descripcion</option>
-                        }
-                        
-                        </select>
+                        <InputSelect id="TipoTecnico" @bind-Value="Tecnicos.TipoTecnicoId" class="form-select">
+                            <option value="">Seleccione un tipo de técnico</option>
+                            @foreach (var tipoTecnico in ListaTiposTecnicos)
+                            {
+                                 <option value="@tipoTecnico.TipoTecnicoId">@tipoTecnico.Descripcion</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => Tecnicos.TipoTecnicoId)" />
                     </div>
-               </div
+               </div>
 
             @* Nombre *@
            <div class="mb-3">
@@ -85,15 +86,26 @@
 
 
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        ListaTiposTecnicos = tiposTecnicosService.Listar(c => true);
+        // Cargar los tipos de técnicos
+        ListaTiposTecnicos = new List<TiposTecnicos>
+    {
+        new TiposTecnicos { TipoTecnicoId = 1, Descripcion = "Redes" },
+        new TiposTecnicos { TipoTecnicoId = 2, Descripcion = "Reparacion" },
+        new TiposTecnicos { TipoTecnicoId = 3, Descripcion = "Impresoras" },
+        new TiposTecnicos { TipoTecnicoId = 4, Descripcion = "Soporte" },
+        new TiposTecnicos { TipoTecnicoId = 5, Descripcion = "Celulares" }
+    };
 
-        if (tecnicoId.HasValue)
+        if (TecnicoId != 0)
         {
-            Tecnicos.IdTecnico = tecnicoId.Value;
+            // Aquí llamas al método ObtenerPorId del servicio
+            Tecnicos = await tecnicosService.ObtenerPorId(TecnicoId);
         }
     }
+
+
     public async Task MostrarNotificacion()
     {
         mostrarNotificacion = true;
