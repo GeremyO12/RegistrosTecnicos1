@@ -14,6 +14,13 @@ public class TecnicosServices
         _context = contexto;
     }
 
+    public async Task<Tecnicos?> ObtenerPorId(int id)
+    {
+        return await _context.Tecnicos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.IdTecnico == id);
+    }
+
     public async Task<bool> Existe(int idTecnico)
     {
         return await _context.Tecnicos
